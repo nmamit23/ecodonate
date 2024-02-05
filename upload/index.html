@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets API Example</title>
+</head>
+<body>
+
+<div>
+    <label for="column1">Column 1:</label>
+    <input type="text" id="column1" placeholder="Enter data for column 1">
+</div>
+<div>
+    <label for="column2">Column 2:</label>
+    <input type="text" id="column2" placeholder="Enter data for column 2">
+</div>
+<div>
+    <label for="column3">Column 3:</label>
+    <input type="text" id="column3" placeholder="Enter data for column 3">
+</div>
+<button onclick="addRow()">Add Row</button>
+
+<div id="table-container"></div>
+
+<script>
+    const apiKey = 'AIzaSyBgGyjB9FBrdvzCAslDmk5jw8pAYokE9R0';
+    const spreadsheetId = '1v9OqgWXch0gzlYeUSa4DBW11c6FeItubNwUCyf_MhYk';
+    const sheetName = 'Sheet1';
+    const clientId = '700892481819-kracvlotc5b28hgq172m0f3mc26t5v2h.apps.googleusercontent.com';
+
+    function addRow() {
+        const data1 = document.getElementById('column1').value;
+        const data2 = document.getElementById('column2').value;
+        const data3 = document.getElementById('column3').value;
+
+        const newRow = [data1, data2, data3];
+
+        // Use OAuth only for adding a new row
+        authorize(() => {
+            fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}?key=${apiKey}`)
+                .then(response => response.json())
+                .then(existingData => {
+                    const values = existingData.values || [];
+                    values.push(newRow);
+
+                    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}?valueInputOption=RAW&key=${apiKey}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token}`
+                        },
+                        body: JSON.stringify({
+                            values: values,
+                        }),
+                    })
+                    .then(() => {
+                        refreshTable();
+                    })
+                    .catch(error => console.error('Error updating data:', error));
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        });
+    }
+
+    function refreshTable() {
+        fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}?key=${apiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data from Google Sheets:', data);
+
+                const values = data.values || [];
+
+                const table = document.createElement('table');
+                table.border = '1';
+
+                values.forEach(rowData => {
+                    const row = table.insertRow();
+
+                    rowData.forEach(cellData => {
+                        const cell = row.insertCell();
+                        cell.textContent = cellData;
+                    });
+                });
+
+                const tableContainer = document.getElementById('table-container');
+                tableContainer.innerHTML = '';
+                tableContainer.appendChild(table);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    }
+
+    function authorize(callback) {
+        gapi.auth2.getAuthInstance().signIn().then(() => {
+            console.log('Authorization successful!');
+            if (callback) {
+                callback();
+            }
+        });
+    }
+
+    // Initial load of the table
+    refreshTable();
+</script>
+
+<script src="https://apis.google.com/js/api.js?onload=handleClientLoad"></script>
+
+</body>
+</html>
