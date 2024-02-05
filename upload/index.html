@@ -100,29 +100,36 @@
     }
 
     // Load the Google API client library
-    gapi.load('client:auth2', {
-        callback: function() {
-            // Initialize the Google API client with your API key and client ID
-            gapi.client.init({
-                apiKey: apiKey,
-                clientId: clientId,
-                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-                scope: "https://www.googleapis.com/auth/spreadsheets.readonly"
-            }).then(() => {
-                // After initialization, refresh the table
-                refreshTable();
-            });
-        },
-        onerror: function() {
-            console.error('Failed to load Google API client library');
-        },
-        timeout: 5000, // 5 seconds
-        ontimeout: function() {
-            console.error('Timed out while loading Google API client library');
-        }
-    });
+    function loadClientLibrary() {
+        gapi.load('client:auth2', {
+            callback: function() {
+                // Initialize the Google API client with your API key and client ID
+                gapi.client.init({
+                    apiKey: apiKey,
+                    clientId: clientId,
+                    discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+                    scope: "https://www.googleapis.com/auth/spreadsheets.readonly"
+                }).then(() => {
+                    // After initialization, refresh the table
+                    refreshTable();
+                });
+            },
+            onerror: function() {
+                console.error('Failed to load Google API client library');
+            },
+            timeout: 5000, // 5 seconds
+            ontimeout: function() {
+                console.error('Timed out while loading Google API client library');
+            }
+        });
+    }
+
+    // Load the Google API client library on window load
+    window.onload = loadClientLibrary;
 
 </script>
+
+<script src="https://apis.google.com/js/api.js"></script>
 
 </body>
 </html>
